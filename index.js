@@ -10,16 +10,37 @@ const PORT = process.env.PORT || 3000;
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
-// ⚡ Stable stealth for Vercel: remove evasions that break bundling
-const stealth = StealthPlugin();
-[
-  'chrome.app',
-  'chrome.csi',
-  'chrome.loadTimes',
-  'chrome.runtime'
-].forEach(e => stealth.enabledEvasions.delete(e));
+// Only these evasions (omit chrome.* — those paths often fail Vercel's serverless bundle).
+const STEALTH_EVASIONS = new Set([
+  'defaultArgs',
+  'iframe.contentWindow',
+  'media.codecs',
+  'navigator.hardwareConcurrency',
+  'navigator.languages',
+  'navigator.permissions',
+  'navigator.plugins',
+  'navigator.webdriver',
+  'sourceurl',
+  'user-agent-override',
+  'webgl.vendor',
+  'window.outerdimensions',
+]);
 
-puppeteer.use(stealth);
+// Static requires so @vercel/node / NFT includes evasion files (puppeteer-extra loads them dynamically).
+require('puppeteer-extra-plugin-stealth/evasions/defaultArgs');
+require('puppeteer-extra-plugin-stealth/evasions/iframe.contentWindow');
+require('puppeteer-extra-plugin-stealth/evasions/media.codecs');
+require('puppeteer-extra-plugin-stealth/evasions/navigator.hardwareConcurrency');
+require('puppeteer-extra-plugin-stealth/evasions/navigator.languages');
+require('puppeteer-extra-plugin-stealth/evasions/navigator.permissions');
+require('puppeteer-extra-plugin-stealth/evasions/navigator.plugins');
+require('puppeteer-extra-plugin-stealth/evasions/navigator.webdriver');
+require('puppeteer-extra-plugin-stealth/evasions/sourceurl');
+require('puppeteer-extra-plugin-stealth/evasions/user-agent-override');
+require('puppeteer-extra-plugin-stealth/evasions/webgl.vendor');
+require('puppeteer-extra-plugin-stealth/evasions/window.outerdimensions');
+
+puppeteer.use(StealthPlugin({ enabledEvasions: STEALTH_EVASIONS }));
 
 let browserInstance;
 
